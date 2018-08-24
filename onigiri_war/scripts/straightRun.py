@@ -98,14 +98,16 @@ class straightBot():
             r.sleep()
 
 
-if __name__ == '__main__':
-    rospy.init_node('onigiri')
-    
+if __name__ == '__main_me_':
+    rospy.init_node('straight_run')
+
+    print("-- " + self.name + ": start straight_run --" )   #debag print
+  
     # straight
-    s_bot = straightBot('onigiri_bot')
+    s_bot = straightBot('ume_bot')
     s_bot.strategy()
 
     
     # rando
-    r_bot = RandomBot('onigiri_bot')
+    r_bot = RandomBot('ume_bot')
     r_bot.strategy()            

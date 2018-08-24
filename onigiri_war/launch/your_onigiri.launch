@@ -6,7 +6,9 @@
 
 
     <!-- sample program  -->
-    <node pkg="onigiri_war" type="straightRun.py" name="straightRun" output="screen" />
+    <!--<node pkg="onigiri_war" type="randomRun.py" name="randomRun" output="screen"/> -->
+    <!--<node pkg="onigiri_war" type="straightRun.py" name="straightRun" output="screen" /> -->
+    <node pkg="onigiri_war" type="color_tracking_Run.py" name="color_tracking_Run" output="screen" />
 
 
 
