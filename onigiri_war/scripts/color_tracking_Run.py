@@ -13,12 +13,12 @@ from time import sleep
 from Run import *
 
 
-class Color_tracking:
+class Color_tracking:  
   def __init__(self, bot_name):
     #bot nameprint
     self.name = bot_name
     print("-- " + self.name + ": Color_tracking object init --")   #debag print
-            
+    
     #走行用
     self.run = RunBot()
 
@@ -26,7 +26,7 @@ class Color_tracking:
     self.bridge = CvBridge()  
     self.image_sub = rospy.Subscriber('camera/image_raw', Image, self.image_callback) #input setting
     print("-- " + self.name + ": Subscriber set --")   #debag print
-    
+
 
 
   #カメラ値取得    
@@ -45,33 +45,40 @@ class Color_tracking:
     #色を抽出するための閾値を設定
     green_lower = np.array([60, 50, 0]) #enemy
     green_upper = np.array([170, 100, 100])
-    #blue_lower = np.array([110,50,50])
-    #blue_upper = np.array([130,255,255])
-    blue_lower = np.array([180,50,0]) #food
-    blue_upper = np.array([260,100,100])
+    blue_lower = np.array([110,50,50])
+    blue_upper = np.array([130,255,255])
+    #blue_lower = np.array([180,50,0]) #food
+    #blue_upper = np.array([260,100,100])
          
     #色抽出
+    green_msk = cv2.inRange(hsv_img, green_lower, green_upper)
     blue_msk = cv2.inRange(hsv_img, blue_lower, blue_upper)
-             
+    
+    #抽出画像の合成
+    mask = cv2.bitwise_or(green_msk, blue_msk)
+   
     #マスク画像の抽出
-    blue_res = cv2.bitwise_and(bgr_img, bgr_img, mask = blue_msk)
-
+    #res = cv2.bitwise_and(bgr_img, bgr_img, mask = msk)
+  
+    
     #2値化
-    blue_binary = cv2.threshold(blue_msk, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    binary = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
     #ラベリング処理
-    blue_label = cv2.connectedComponentsWithStats(blue_binary)
+    label = cv2.connectedComponentsWithStats(binary)
 
     #ラベリング情報を項目別に抽出
-    n = blue_label[0] - 1                    #個数
-    data = np.delete(blue_label[2], 0, 0)    #座標, 幅, 高さ
-    center = np.delete(blue_label[3], 0, 0)  #中心座標
+    n = label[0] - 1                    #個数
+    data = np.delete(label[2], 0, 0)    #座標, 幅, 高さ
+    center = np.delete(label[3], 0, 0)  #中心座標
 
     #結果表示
     #cv2.imshow('bgr_img', bgr_img)
-    #cv2.imshow('mask', msk)
+    #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.waitKey(0)
+    
+    #指令値初期化
     linear_x = 0
     angular_z = 0
 
@@ -96,25 +103,25 @@ class Color_tracking:
     #一番近くのターゲットを探す
     #データ無し：バック、旋回
     if len(data) <= 0:
-      linear_x = -1
-      angular_z = 5
       print("データ無し状態-------------")
+      linear_x = random.randint(-1,1)
+      angular_z = 5
     else:
       #データあり
       max_index = np.argmax(data[:,4])#面積最大の検索
       print("max----------------------------")
       print(data[max_index,4]) 
-      if data[max_index,4] < 3500 : #マーカーとの距離が近すぎないことを確認
+      if data[max_index,4] < 5500 : #マーカーとの距離が近すぎないことを確認
         x_offset = 200
         linear_x = 1
         angular_z = 1
         #曲がる方向の確認
         if (data[max_index,0] - x_offset) > 0:
-          self.angular_z = (-1) * angular_z 
+          self.angular_z = -1   #右
       else:
         #マーカーとの距離が近い時
-        linear_x = -1
-        angular_z = 5  
+        linear_x = random.randint(-1,1)
+        angular_z = 5 
     #run
     print(linear_x, 0, angular_z)
     self.run.calcTwist(linear_x, angular_z)
